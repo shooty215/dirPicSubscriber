@@ -25,17 +25,30 @@ public final class App {
          * jar dirPicSubscriber.jar <broker_ip> <broker_port> <broker_topic>
          * <image_save_directory> <key_store_directory> <user_name> <user_password>
          */
-        String brokerParameter = "tcp://localhost:1883";
+
+        // Inputs for meant use.
+        String brokerParameter = args[0];
+        String portParameter = args[1];
+        String channelParameter = args[2];
+        String imageDirectory = args[3];
+        String keyStoreParameter = args[4];
+        String userNameParameter = args[5];
+        String userPasswordParameter = args[6];
+
+        // Test inputs.
+        // String brokerParameter = "localhost";
         // String portParameter = "1883";
-        String channelParameter = "test";
-        String imageDirectory = "test";
+        // String channelParameter = "test";
+        // String imageDirectory = "/home/sht/dirPic/testImageSaveDirectory/";
         // String keyStoreDirectory = "test";
         // String userName = "test";
         // String userPassword = "test";
 
         try {
 
-            MqttClient client = new MqttClient(brokerParameter, MqttClient.generateClientId());
+            String brokerDetails = "tcp://" + brokerParameter + ":" + portParameter;
+
+            MqttClient client = new MqttClient(brokerDetails, "idSubscriber" + MqttClient.generateClientId());
 
             client.setCallback(new MqttCallback() {
 
@@ -54,13 +67,14 @@ public final class App {
                     // tries to save image from received bytes
                     try {
 
-                        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+                        DateTimeFormatter dateTimeFormatter = DateTimeFormatter
+                                .ofPattern("/yyyy/MM/dd/ dd.MM.yyyy_HH:mm:ss");
 
                         LocalDateTime currentTime = LocalDateTime.now();
 
                         String fileName = dateTimeFormatter.format(currentTime) + ".jpeg";
 
-                        // String filePath = imageDirectory + fileName;
+                        String filePath = imageDirectory + fileName;
 
                         byte[] data = m.getPayload();
 
@@ -68,8 +82,7 @@ public final class App {
 
                         BufferedImage bImage2 = ImageIO.read(bis);
 
-                        // File file = new File(filePath);
-                        File file = new File("/home/sht/" + fileName);
+                        File file = new File(filePath);
 
                         file.getParentFile().mkdirs();
 
@@ -101,9 +114,9 @@ public final class App {
             // best to use will on a different topic to avoid intermingling with images'
             // bytes. options.setWill("test", "Disconnect".getBytes(), 2, true);
 
-            options.setUserName("userName");
+            options.setUserName(userNameParameter);
 
-            options.setPassword("password".toCharArray());
+            options.setPassword(userPasswordParameter.toCharArray());
 
             options.setCleanSession(false);
 
