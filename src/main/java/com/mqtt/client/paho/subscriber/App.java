@@ -72,7 +72,7 @@ public final class App {
 
                         LocalDateTime currentTime = LocalDateTime.now();
 
-                        String fileName = dateTimeFormatter.format(currentTime) + ".jpg";
+                        String fileName = dateTimeFormatter.format(currentTime) + ".jpeg";
 
                         String filePath = imageDirectory + fileName;
 
@@ -88,7 +88,7 @@ public final class App {
 
                         file.createNewFile();
 
-                        ImageIO.write(bImage2, "jpg", file);
+                        ImageIO.write(bImage2, "jpeg", file);
 
                         System.out.println("Image created!");
 
