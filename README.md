@@ -11,7 +11,7 @@ Running project's main method (with respective arguments) will subscribe to argu
 
 Project is still in its infancy.
 
-Basic functionality is implemented, can't be build without errors yet, etc.
+Basic functionality is implemented.
 
 Crude validations implemented.
 
