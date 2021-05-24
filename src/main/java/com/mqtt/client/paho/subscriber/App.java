@@ -67,8 +67,7 @@ public final class App {
                     // tries to save image from received bytes
                     try {
 
-                        DateTimeFormatter dateTimeFormatter = DateTimeFormatter
-                                .ofPattern("/yyyy/MM/dd/ dd.MM.yyyy_HH:mm:ss");
+                        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd_HH:mm:ss");
 
                         LocalDateTime currentTime = LocalDateTime.now();
 
