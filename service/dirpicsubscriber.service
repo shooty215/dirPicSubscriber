@@ -7,10 +7,10 @@ After=network.target
 #BindReadOnlyPaths=/usr/lib:/usr/lib
 User=dirpic
 Type=simple
-PrivateTmp=true
 #WorkingDirectory=/home/dirpic/runtime
 #RootDirectory=/home/dirpic/root
 ExecStart=/usr/bin/dirpicsubscriber
+PrivateTmp=true
 
 [Install]
 WantedBy=multi-user.target
