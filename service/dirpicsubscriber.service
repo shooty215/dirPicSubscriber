@@ -1,0 +1,15 @@
+[Unit]
+Description=DirPic-Subscriber
+After=network.target
+
+[Service]
+WorkingDirectory=/home/dirpic/subscriber/runtime
+RootDirectory=/home/dirpic/subscriber/root
+User=dirpic
+Group=dirpic
+Type=simple
+Restart=always
+ExecStart=/usr/bin/dirpicsubscriber
+
+[Install]
+WantedBy=multi-user.target
