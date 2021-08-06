@@ -3,15 +3,15 @@ Description=DirPic-Subscriber
 After=network.target
 
 [Service]
+BindReadOnlyPaths=/usr/bin:/usr/bin
+BindReadOnlyPaths=/usr/lib:/usr/lib
 Type=notify
 WorkingDirectory=/home/dirpic/runtime
 RootDirectory=/home/dirpic/root
 User=dirpic
 Group=dirpic
 ExecStart=/usr/bin/dirpicsubscriber
-ExecReload=/bin/kill -USR1 $MAINPID
-BindReadOnlyPaths=/usr/bin:/usr/bin
-BindReadOnlyPaths=/usr/lib:/usr/lib
+
 Environment=HOME=/home/dirpic/env
 
 [Install]
