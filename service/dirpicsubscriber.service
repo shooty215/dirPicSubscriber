@@ -13,6 +13,7 @@ ExecStart=/usr/bin/sudo /usr/bin/dirpicsubscriber -root=/home/dirpic/tmp
 ExecReload=/bin/kill -USR1 $MAINPID
 BindReadOnlyPaths=/usr/bin:/usr/bin
 BindReadOnlyPaths=/usr/lib:/usr/lib
+Environment=NODE_PATH=/home/dirpic/env
 
 [Install]
 WantedBy=multi-user.target
