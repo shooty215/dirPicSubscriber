@@ -5,11 +5,11 @@ After=network.target
 [Service]
 #BindReadOnlyPaths=/usr/bin:/usr/bin
 #BindReadOnlyPaths=/usr/lib:/usr/lib
+User=dirpic
 Type=simple
 #WorkingDirectory=/home/dirpic/runtime
 #RootDirectory=/home/dirpic/root
-User=dirpic
-ExecStart=!/usr/bin/dirpicsubscriber
+ExecStart=/usr/bin/dirpicsubscriber
 
 [Install]
 WantedBy=multi-user.target
