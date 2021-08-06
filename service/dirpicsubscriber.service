@@ -10,6 +10,8 @@ Group=dirpic
 Type=simple
 Restart=always
 ExecStart=/usr/bin/dirpicsubscriber
+BindReadOnlyPaths=/usr/bin:/usr/bin
+BindReadOnlyPaths=/usr/lib:/usr/lib
 
 [Install]
 WantedBy=multi-user.target
