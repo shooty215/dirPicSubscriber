@@ -3,6 +3,7 @@ Description=DirPic-Subscriber
 After=network.target
 
 [Service]
+Type=notify
 WorkingDirectory=/home/dirpic/runtime
 RootDirectory=/home/dirpic/root
 User=dirpic
