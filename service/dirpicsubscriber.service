@@ -8,7 +8,7 @@ WorkingDirectory=/home/dirpic/runtime
 RootDirectory=/home/dirpic/root
 User=dirpic
 Group=dirpic
-ExecStart=/usr/bin/dirpicsubscriber -root=/home/dirpic/runtime
+ExecStart=/usr/bin/dirpicsubscriber
 ExecReload=/bin/kill -USR1 $MAINPID
 BindReadOnlyPaths=/usr/bin:/usr/bin
 BindReadOnlyPaths=/usr/lib:/usr/lib
