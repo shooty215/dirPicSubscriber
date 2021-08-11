@@ -49,19 +49,27 @@ public final class App {
          */
 
         // Inputs for meant use.
-        String brokerParameter = args[0];
-        String portParameter = args[1];
-        String channelParameter = args[2];
-        String imageDirectory = args[3];
-        String keyStoreParameter = args[4];
-        String userNameParameter = args[5];
-        String userPasswordParameter = args[6];
-        String caPassword = args[7];
+        final String brokerParameter = args[0];
+        final String portParameter = args[1];
+        final String channelParameter = args[2];
+        final String imageDirectory = args[3];
+        final String keyStoreParameter = args[4];
+        final String userNameParameter = args[5];
+        final String userPasswordParameter = args[6];
+        final String caPassword = args[7];
 
         final String serverCa = keyStoreParameter + "ca_crt.pem";
         final String clientCrt = keyStoreParameter + "client_crt.pem";
         final String clientKey = keyStoreParameter + "client_key.pem";
         final String keyPwd = caPassword;
+
+        subscribeToChannel(brokerParameter, portParameter, channelParameter, imageDirectory, keyStoreParameter,
+                userNameParameter, userPasswordParameter, caPassword, serverCa, clientCrt, clientKey, keyPwd);
+    }
+
+    private static void subscribeToChannel(String brokerParameter, String portParameter, String channelParameter,
+            String imageDirectory, String keyStoreParameter, String userNameParameter, String userPasswordParameter,
+            String caPassword, String serverCa, String clientCrt, String clientKey, String keyPwd) {
 
         try {
 
@@ -75,6 +83,12 @@ public final class App {
                 public void connectionLost(Throwable throwable) {
 
                     System.out.println("Connection lost!");
+
+                    System.out.println("Retrying...");
+
+                    subscribeToChannel(brokerParameter, portParameter, channelParameter, imageDirectory,
+                            keyStoreParameter, userNameParameter, userPasswordParameter, caPassword, serverCa,
+                            clientCrt, clientKey, keyPwd);
 
                 };
 
@@ -100,15 +114,29 @@ public final class App {
 
                         BufferedImage bImage2 = ImageIO.read(bis);
 
+                        bImage2.flush();
+
                         File file = new File(filePath);
 
                         file.getParentFile().mkdirs();
 
                         file.createNewFile();
 
+                        System.out.println("Writing File!");
+
                         ImageIO.write(bImage2, "jpeg", file);
 
-                        System.out.println("Image created!");
+                        if (file.isFile() && file.exists()) {
+
+                            System.out.println("File Written!");
+
+                            System.out.println("Image Archived!");
+
+                        } else {
+
+                            System.out.println("File NOT Written!");
+
+                        }
 
                     } catch (Exception e) {
 
@@ -121,7 +149,7 @@ public final class App {
                 @Override
                 public void deliveryComplete(IMqttDeliveryToken token) {
 
-                    System.out.println(new String("Delivered!"));
+                    System.out.println(new String("Delivered! Should Not Accrue."));
 
                 }
 
@@ -151,19 +179,25 @@ public final class App {
 
             System.out.println("Subscribed!");
 
-            // client.disconnect();
+            System.out.println("Awaiting Incoming Surveillance Images!");
 
         } catch (MqttException e) {
 
-            System.out.println("Not Subscribed! - Server Error.");
-
             e.printStackTrace();
+
+            System.out.println("\nRetrying...\n");
+
+            subscribeToChannel(brokerParameter, portParameter, channelParameter, imageDirectory, keyStoreParameter,
+                    userNameParameter, userPasswordParameter, caPassword, serverCa, clientCrt, clientKey, keyPwd);
 
         } catch (Exception e) {
 
-            System.out.println("Not Subscribed! - Something Went Wrong.");
-
             e.printStackTrace();
+
+            System.out.println("\nRetrying...\n");
+
+            subscribeToChannel(brokerParameter, portParameter, channelParameter, imageDirectory, keyStoreParameter,
+                    userNameParameter, userPasswordParameter, caPassword, serverCa, clientCrt, clientKey, keyPwd);
         }
     }
 
