@@ -46,6 +46,16 @@
         <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
         <version>1.0.2</version>
     </dependency>
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcpkix-fips</artifactId>
+      <version>1.0.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcprov-ext-debug-jdk15on</artifactId>
+      <version>1.69</version>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
