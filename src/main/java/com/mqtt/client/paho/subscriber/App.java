@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 import javax.imageio.ImageIO;
+
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -28,9 +29,9 @@ import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 
+import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
-import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -57,6 +58,11 @@ public final class App {
         String userPasswordParameter = args[6];
         String caPassword = args[7];
 
+        final String serverCa = keyStoreParameter + "ca_crt.pem";
+        final String clientCrt = keyStoreParameter + "client_crt.pem";
+        final String clientKey = keyStoreParameter + "client_key.pem";
+        final String keyPwd = caPassword;
+
         try {
 
             String brokerDetails = "ssl://" + brokerParameter + ":" + portParameter;
@@ -70,7 +76,7 @@ public final class App {
 
                     System.out.println("Connection lost!");
 
-                }
+                };
 
                 @Override
                 public void messageArrived(String t, MqttMessage m) throws Exception {
@@ -123,13 +129,9 @@ public final class App {
 
             MqttConnectOptions options = new MqttConnectOptions();
 
-            SSLSocketFactory socketFactory = getSocketFactory(keyStoreParameter + "ca_cert.pem",
-                    keyStoreParameter + "client_crt.pem", keyStoreParameter + "client_key.pem", caPassword);
+            SSLSocketFactory socketFactory = getSocketFactory(serverCa, clientCrt, clientKey, keyPwd);
 
             options.setSocketFactory(socketFactory);
-
-            // best to use will on a different topic to avoid intermingling with images'
-            // bytes. options.setWill("test", "Disconnect".getBytes(), 2, true);
 
             options.setUserName(userNameParameter);
 
@@ -155,10 +157,13 @@ public final class App {
 
             System.out.println("Not Subscribed! - Server Error.");
 
+            e.printStackTrace();
+
         } catch (Exception e) {
 
             System.out.println("Not Subscribed! - Something Went Wrong.");
 
+            e.printStackTrace();
         }
     }
 
@@ -190,7 +195,8 @@ public final class App {
         PEMParser pemParser = new PEMParser(new FileReader(keyFile));
         Object object = pemParser.readObject();
         PEMDecryptorProvider decProv = new JcePEMDecryptorProviderBuilder().build(password.toCharArray());
-        JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
+        JcaPEMKeyConverter converter = new JcaPEMKeyConverter()
+                .setProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
         KeyPair key;
         if (object instanceof PEMEncryptedKeyPair) {
             System.out.println("Encrypted key - we will use provided password");
