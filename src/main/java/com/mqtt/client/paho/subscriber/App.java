@@ -1,45 +1,37 @@
 package com.mqtt.client.paho.subscriber;
 
-import java.awt.image.BufferedImage;
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.security.KeyPair;
-import java.security.KeyStore;
-import java.security.Security;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import com.mqtt.client.paho.subscriber.service.DirPicMqttClient;
+import com.mqtt.client.paho.subscriber.service.Factory;
 
-import javax.imageio.ImageIO;
-
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManagerFactory;
 
-import org.bouncycastle.openssl.PEMDecryptorProvider;
-import org.bouncycastle.openssl.PEMEncryptedKeyPair;
-import org.bouncycastle.openssl.PEMKeyPair;
-import org.bouncycastle.openssl.PEMParser;
-import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
-import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
-import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
-
-import org.eclipse.paho.client.mqttv3.MqttClient;
-import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
-import org.eclipse.paho.client.mqttv3.MqttCallback;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 public final class App {
 
-    private App() {
-    }
+    final static String ALIAS_CA_CRT_PEM = "ca_crt.pem";
+    final static String ALIAS_CRT_PEM = "client_crt.pem";
+    final static String ALIAS_KEY_PEM = "client_key.pem";
+
+    private final static String MQTT_PROTOCOL_CONNECTION = "ssl://";
+
+    final static String NOTIFICATION_CONNECTION_PREPARE = "\nPreparing connection the server...\n";
+    final static String NOTIFICATION_CONNECTION_ATTEMPT = "\nConnecting...\n";
+    final static String NOTIFICATION_CONNECTION_ESTABLISHED = "\nConnected!\n";
+
+    final static String NOTIFICATION_SUBSCRIBE_ATTEMPT = "\nSubscribing...\n";
+
+    final static String NOTIFICATION_SUCCESS_SUBSCRIPTION = "\nWaiting for publications!\n";
+
+    final static String NOTIFICATION_ERROR_CONNECTION = "\nConnection Issues!\n";
+    final static String NOTIFICATION_ERROR_RETRY = "\nRetrying...\n";
+    final static String NOTIFICATION_ERROR_PARAMETER = "\nParameter Issues!\n";
+    final static String NOTIFICATION_ERROR_SUBSCRIPTION = "\nSubscription Issues!\n";
+    final static String NOTIFICATION_ERROR_IO = "\nI/O problem!\n";
+    final static String NOTIFICATION_ERROR_GENERAL = "\nGeneral Exception!\n";
+
+    final static String NOTIFICATION_ERROR_INPUT_BOUNDARIES = "\nInputs are out of bound!\n";
+    final static String NOTIFICATION_ERROR_INPUT_ILLEGAL = "\nIllegal inputs!\n";
 
     public static void main(String[] args) {
         /*
@@ -48,221 +40,97 @@ public final class App {
          * <ca_password>
          */
 
-        // Inputs for meant use.
-        final String brokerParameter = args[0];
-        final String portParameter = args[1];
-        final String channelParameter = args[2];
-        final String imageDirectory = args[3];
-        final String keyStoreParameter = args[4];
-        final String userNameParameter = args[5];
-        final String userPasswordParameter = args[6];
-        final String caPassword = args[7];
+        try {
 
-        final String serverCa = keyStoreParameter + "ca_crt.pem";
-        final String clientCrt = keyStoreParameter + "client_crt.pem";
-        final String clientKey = keyStoreParameter + "client_key.pem";
-        final String keyPwd = caPassword;
+            // Inputs for meant use.
+            final String brokerParameter = args[0];
+            final String portParameter = args[1];
+            final String channelParameter = args[2];
+            final String imageDirectory = args[3];
+            final String keyStoreParameter = args[4];
+            final String userNameParameter = args[5];
+            final String userPasswordParameter = args[6];
+            final String caPassword = args[7];
 
-        subscribeToChannel(brokerParameter, portParameter, channelParameter, imageDirectory, keyStoreParameter,
-                userNameParameter, userPasswordParameter, caPassword, serverCa, clientCrt, clientKey, keyPwd);
+            final String serverCa = keyStoreParameter + ALIAS_CA_CRT_PEM;
+            final String clientCrt = keyStoreParameter + ALIAS_CRT_PEM;
+            final String clientKey = keyStoreParameter + ALIAS_KEY_PEM;
+            final String keyPwd = caPassword;
+
+            subscribeToChannel(brokerParameter, portParameter, channelParameter, imageDirectory, keyStoreParameter,
+                    userNameParameter, userPasswordParameter, caPassword, serverCa, clientCrt, clientKey, keyPwd);
+
+        } catch (IndexOutOfBoundsException e) {
+
+            // e.printStackTrace();
+
+            System.out.println(NOTIFICATION_ERROR_INPUT_BOUNDARIES);
+
+            System.out.println(NOTIFICATION_ERROR_RETRY);
+
+            return;
+
+        } catch (IllegalArgumentException e) {
+
+            // e.printStackTrace();
+
+            System.out.println(NOTIFICATION_ERROR_INPUT_ILLEGAL);
+
+            System.out.println(NOTIFICATION_ERROR_RETRY);
+
+            return;
+
+        }
     }
 
     private static void subscribeToChannel(String brokerParameter, String portParameter, String channelParameter,
-            String imageDirectory, String keyStoreParameter, String userNameParameter, String userPasswordParameter,
+            String imageDirectory, String keyStoreParameter, String userParameter, String passwordParameter,
             String caPassword, String serverCa, String clientCrt, String clientKey, String keyPwd) {
 
         try {
 
-            String brokerDetails = "ssl://" + brokerParameter + ":" + portParameter;
+            System.out.println(NOTIFICATION_CONNECTION_PREPARE);
 
-            MqttClient client = new MqttClient(brokerDetails, "idSubscriber" + MqttClient.generateClientId());
+            String brokerDetails = MQTT_PROTOCOL_CONNECTION + brokerParameter + ":" + portParameter;
 
-            client.setCallback(new MqttCallback() {
+            SSLSocketFactory socketFactory = Factory.getSocketFactory(serverCa, clientCrt, clientKey, keyPwd);
 
-                @Override
-                public void connectionLost(Throwable throwable) {
+            DirPicMqttClient client = new DirPicMqttClient(socketFactory, imageDirectory, brokerDetails, userParameter,
+                    passwordParameter);
 
-                    System.out.println("Connection lost!");
+            System.out.println(NOTIFICATION_CONNECTION_ATTEMPT);
 
-                    System.out.println("Retrying...");
+            client.connect();
 
-                    subscribeToChannel(brokerParameter, portParameter, channelParameter, imageDirectory,
-                            keyStoreParameter, userNameParameter, userPasswordParameter, caPassword, serverCa,
-                            clientCrt, clientKey, keyPwd);
+            System.out.println(NOTIFICATION_CONNECTION_ESTABLISHED);
 
-                };
-
-                @Override
-                public void messageArrived(String t, MqttMessage m) throws Exception {
-
-                    System.out.println("Message received! Assessing bytes..");
-
-                    // tries to save image from received bytes
-                    try {
-
-                        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy.MM.dd_HH:mm:ss");
-
-                        LocalDateTime currentTime = LocalDateTime.now();
-
-                        String fileName = dateTimeFormatter.format(currentTime) + ".jpeg";
-
-                        String filePath = imageDirectory + fileName;
-
-                        byte[] data = m.getPayload();
-
-                        ByteArrayInputStream bis = new ByteArrayInputStream(data);
-
-                        BufferedImage bImage2 = ImageIO.read(bis);
-
-                        bImage2.flush();
-
-                        File file = new File(filePath);
-
-                        file.getParentFile().mkdirs();
-
-                        file.createNewFile();
-
-                        System.out.println("Writing File!");
-
-                        ImageIO.write(bImage2, "jpeg", file);
-
-                        if (file.isFile() && file.exists()) {
-
-                            System.out.println("File Written!");
-
-                            System.out.println("Image Archived!");
-
-                        } else {
-
-                            System.out.println("File NOT Written!");
-
-                        }
-
-                    } catch (Exception e) {
-
-                        System.out.println("Could not create image file from bytes!");
-
-                    }
-
-                }
-
-                @Override
-                public void deliveryComplete(IMqttDeliveryToken token) {
-
-                    System.out.println(new String("Delivered! Should Not Accrue."));
-
-                }
-
-            });
-
-            MqttConnectOptions options = new MqttConnectOptions();
-
-            SSLSocketFactory socketFactory = getSocketFactory(serverCa, clientCrt, clientKey, keyPwd);
-
-            options.setSocketFactory(socketFactory);
-
-            options.setUserName(userNameParameter);
-
-            options.setPassword(userPasswordParameter.toCharArray());
-
-            options.setCleanSession(false);
-
-            System.out.println("Connecting...");
-
-            client.connect(options);
-
-            System.out.println("Connected!");
-
-            System.out.println("Subscribing...");
+            System.out.println(NOTIFICATION_SUBSCRIBE_ATTEMPT);
 
             client.subscribe(channelParameter);
 
-            System.out.println("Subscribed!");
-
-            System.out.println("Awaiting Incoming Surveillance Images!");
+            System.out.println(NOTIFICATION_SUCCESS_SUBSCRIPTION);
 
         } catch (MqttException e) {
 
-            e.printStackTrace();
+            // e.printStackTrace();
 
-            System.out.println("\nRetrying...\n");
+            System.out.println(NOTIFICATION_ERROR_SUBSCRIPTION + NOTIFICATION_ERROR_CONNECTION);
+
+            System.out.println(NOTIFICATION_ERROR_RETRY);
 
             subscribeToChannel(brokerParameter, portParameter, channelParameter, imageDirectory, keyStoreParameter,
-                    userNameParameter, userPasswordParameter, caPassword, serverCa, clientCrt, clientKey, keyPwd);
+                    userParameter, passwordParameter, caPassword, serverCa, clientCrt, clientKey, keyPwd);
 
         } catch (Exception e) {
 
-            e.printStackTrace();
+            // e.printStackTrace();
 
-            System.out.println("\nRetrying...\n");
+            System.out.println(NOTIFICATION_ERROR_GENERAL);
+
+            System.out.println(NOTIFICATION_ERROR_RETRY);
 
             subscribeToChannel(brokerParameter, portParameter, channelParameter, imageDirectory, keyStoreParameter,
-                    userNameParameter, userPasswordParameter, caPassword, serverCa, clientCrt, clientKey, keyPwd);
+                    userParameter, passwordParameter, caPassword, serverCa, clientCrt, clientKey, keyPwd);
         }
     }
-
-    private static SSLSocketFactory getSocketFactory(final String caCrtFile, final String crtFile, final String keyFile,
-            final String password) throws Exception {
-        Security.addProvider(new BouncyCastlePQCProvider());
-
-        // load CA certificate
-        X509Certificate caCert = null;
-
-        FileInputStream fis = new FileInputStream(caCrtFile);
-        BufferedInputStream bis = new BufferedInputStream(fis);
-        CertificateFactory cf = CertificateFactory.getInstance("X.509");
-
-        while (bis.available() > 0) {
-            caCert = (X509Certificate) cf.generateCertificate(bis);
-            // System.out.println(caCert.toString());
-        }
-
-        // load client certificate
-        bis = new BufferedInputStream(new FileInputStream(crtFile));
-        X509Certificate cert = null;
-        while (bis.available() > 0) {
-            cert = (X509Certificate) cf.generateCertificate(bis);
-            // System.out.println(caCert.toString());
-        }
-
-        // load client private key
-        PEMParser pemParser = new PEMParser(new FileReader(keyFile));
-        Object object = pemParser.readObject();
-        PEMDecryptorProvider decProv = new JcePEMDecryptorProviderBuilder().build(password.toCharArray());
-        JcaPEMKeyConverter converter = new JcaPEMKeyConverter()
-                .setProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-        KeyPair key;
-        if (object instanceof PEMEncryptedKeyPair) {
-            System.out.println("Encrypted key - we will use provided password");
-            key = converter.getKeyPair(((PEMEncryptedKeyPair) object).decryptKeyPair(decProv));
-        } else {
-            System.out.println("Unencrypted key - no password needed");
-            key = converter.getKeyPair((PEMKeyPair) object);
-        }
-        pemParser.close();
-
-        // CA certificate is used to authenticate server
-        KeyStore caKs = KeyStore.getInstance(KeyStore.getDefaultType());
-        caKs.load(null, null);
-        caKs.setCertificateEntry("ca-certificate", caCert);
-        TrustManagerFactory tmf = TrustManagerFactory.getInstance("X509");
-        tmf.init(caKs);
-
-        // client key and certificates are sent to server so it can authenticate
-        // us
-        KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-        ks.load(null, null);
-        ks.setCertificateEntry("certificate", cert);
-        ks.setKeyEntry("private-key", key.getPrivate(), password.toCharArray(),
-                new java.security.cert.Certificate[] { cert });
-        KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-        kmf.init(ks, password.toCharArray());
-
-        // finally, create SSL socket factory
-        SSLContext context = SSLContext.getInstance("TLSv1.2");
-        context.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
-
-        return context.getSocketFactory();
-    }
-
 }
