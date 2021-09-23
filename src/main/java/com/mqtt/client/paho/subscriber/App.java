@@ -1,7 +1,8 @@
 package com.mqtt.client.paho.subscriber;
 
 import com.mqtt.client.paho.subscriber.service.DirPicMqttClient;
-import com.mqtt.client.paho.subscriber.service.Factory;
+import com.mqtt.client.paho.subscriber.service.DirPicSslContext;
+import com.mqtt.client.paho.subscriber.service.Properties;
 
 import javax.net.ssl.SSLSocketFactory;
 
@@ -42,29 +43,13 @@ public final class App {
 
         try {
 
-            // Inputs for meant use.
-            final String brokerParameter = args[0];
-            final String portParameter = args[1];
-            final String channelParameter = args[2];
-            final String imageDirectory = args[3];
-            final String keyStoreParameter = args[4];
-            final String userNameParameter = args[5];
-            final String userPasswordParameter = args[6];
-            final String caPassword = args[7];
+            Properties props = new Properties(args[0]);
 
-            final String serverCa = keyStoreParameter + ALIAS_CA_CRT_PEM;
-            final String clientCrt = keyStoreParameter + ALIAS_CRT_PEM;
-            final String clientKey = keyStoreParameter + ALIAS_KEY_PEM;
-            final String keyPwd = caPassword;
-
-            subscribeToChannel(brokerParameter, portParameter, channelParameter, imageDirectory, keyStoreParameter,
-                    userNameParameter, userPasswordParameter, caPassword, serverCa, clientCrt, clientKey, keyPwd);
+            subscribeToChannel(props);
 
         } catch (IndexOutOfBoundsException e) {
 
-            // e.printStackTrace();
-
-            System.out.println(NOTIFICATION_ERROR_INPUT_BOUNDARIES);
+            System.out.println(NOTIFICATION_ERROR_INPUT_BOUNDARIES + e.getStackTrace());
 
             System.out.println(NOTIFICATION_ERROR_RETRY);
 
@@ -72,9 +57,7 @@ public final class App {
 
         } catch (IllegalArgumentException e) {
 
-            // e.printStackTrace();
-
-            System.out.println(NOTIFICATION_ERROR_INPUT_ILLEGAL);
+            System.out.println(NOTIFICATION_ERROR_INPUT_ILLEGAL + e.getStackTrace());
 
             System.out.println(NOTIFICATION_ERROR_RETRY);
 
@@ -83,20 +66,19 @@ public final class App {
         }
     }
 
-    private static void subscribeToChannel(String brokerParameter, String portParameter, String channelParameter,
-            String imageDirectory, String keyStoreParameter, String userParameter, String passwordParameter,
-            String caPassword, String serverCa, String clientCrt, String clientKey, String keyPwd) {
+    private static void subscribeToChannel(Properties props) {
 
         try {
 
             System.out.println(NOTIFICATION_CONNECTION_PREPARE);
 
-            String brokerDetails = MQTT_PROTOCOL_CONNECTION + brokerParameter + ":" + portParameter;
+            String brokerDetails = MQTT_PROTOCOL_CONNECTION + props.getBrokerIp() + ":" + props.getBrokerPort();
 
-            SSLSocketFactory socketFactory = Factory.getSocketFactory(serverCa, clientCrt, clientKey, keyPwd);
+            DirPicSslContext sslContext = new DirPicSslContext(props);
 
-            DirPicMqttClient client = new DirPicMqttClient(socketFactory, imageDirectory, brokerDetails, userParameter,
-                    passwordParameter);
+            SSLSocketFactory socketFactory = sslContext.getSslSocketFactory();
+
+            DirPicMqttClient client = new DirPicMqttClient(props, socketFactory, brokerDetails);
 
             System.out.println(NOTIFICATION_CONNECTION_ATTEMPT);
 
@@ -106,7 +88,7 @@ public final class App {
 
             System.out.println(NOTIFICATION_SUBSCRIBE_ATTEMPT);
 
-            client.subscribe(channelParameter);
+            client.subscribe(props.getChannelName());
 
             System.out.println(NOTIFICATION_SUCCESS_SUBSCRIPTION);
 
@@ -114,23 +96,21 @@ public final class App {
 
             // e.printStackTrace();
 
-            System.out.println(NOTIFICATION_ERROR_SUBSCRIPTION + NOTIFICATION_ERROR_CONNECTION);
+            System.out.println(NOTIFICATION_ERROR_SUBSCRIPTION + NOTIFICATION_ERROR_CONNECTION + e.getStackTrace());
 
             System.out.println(NOTIFICATION_ERROR_RETRY);
 
-            subscribeToChannel(brokerParameter, portParameter, channelParameter, imageDirectory, keyStoreParameter,
-                    userParameter, passwordParameter, caPassword, serverCa, clientCrt, clientKey, keyPwd);
+            subscribeToChannel(props);
 
         } catch (Exception e) {
 
             // e.printStackTrace();
 
-            System.out.println(NOTIFICATION_ERROR_GENERAL);
+            System.out.println(NOTIFICATION_ERROR_GENERAL + e.getStackTrace());
 
             System.out.println(NOTIFICATION_ERROR_RETRY);
 
-            subscribeToChannel(brokerParameter, portParameter, channelParameter, imageDirectory, keyStoreParameter,
-                    userParameter, passwordParameter, caPassword, serverCa, clientCrt, clientKey, keyPwd);
+            subscribeToChannel(props);
         }
     }
 }

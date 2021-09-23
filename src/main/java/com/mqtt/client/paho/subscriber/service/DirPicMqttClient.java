@@ -18,6 +18,8 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.time.LocalDateTime;
+
+import javax.crypto.Cipher;
 import javax.imageio.ImageIO;
 
 public class DirPicMqttClient extends MqttClient {
@@ -27,16 +29,18 @@ public class DirPicMqttClient extends MqttClient {
     private final String NOTIFICATION_SUCCESS_SUBSCRIBED_IMAGE = "Message received! Assessing bytes..";
     private final String NOTIFICATION_SUCCESS_WRITING = "Image written!";
     private final String NOTIFICATION_SUCCESS_DELIVERY = "Delivered! Should Not Accrue.";
+    private final String NOTIFICATION_SUCCESS_ENCRYPTION = "\nEncrypted!\n";
     private final String TIME_DATE_PATTERN = "yyyy.MM.dd_HH:mm:ss";
 
     private final String FILE_FORMAT_JPEG = ".jpeg";
-
-    final static String NOTIFICATION_ERROR_CONNECTION = "\nConnection Issues!\n";
-    final static String NOTIFICATION_ERROR_RETRY = "\nRetrying...\n";
-    final static String NOTIFICATION_ERROR_PARAMETER = "\nParameter Issues!\n";
-    final static String NOTIFICATION_ERROR_SUBSCRIPTION = "\nSubscription Issues!\n";
-    final static String NOTIFICATION_ERROR_IO = "\nI/O problem!\n";
-    final static String NOTIFICATION_ERROR_GENERAL = "\nGeneral Exception!\n";
+    private final String NOTIFICATION_ERROR_ENCRYPTION = "\nEncryption Exception!\n";
+    private final String NOTIFICATION_ERROR_CONNECTION = "\nConnection Issues!\n";
+    private final String NOTIFICATION_ERROR_RETRY = "\nRetrying...\n";
+    // private final String NOTIFICATION_ERROR_PARAMETER = "\nParameter Issues!\n";
+    // private final String NOTIFICATION_ERROR_SUBSCRIPTION = "\nSubscription
+    // Issues!\n";
+    private final String NOTIFICATION_ERROR_IO = "\nI/O problem!\n";
+    private final String NOTIFICATION_ERROR_GENERAL = "\nGeneral Exception!\n";
 
     private final int MQTT_QOS = 2;
     private final boolean MQTT_RETAINED = false;
@@ -49,18 +53,14 @@ public class DirPicMqttClient extends MqttClient {
 
     private SSLSocketFactory socketFactory;
     private MqttConnectOptions options;
-    private String userParameter;
-    private String passwordParameter;
-    private String imageDirectory;
+    private Properties props;
 
-    public DirPicMqttClient(SSLSocketFactory socketFactory, String imageDirectory, String brokerDetails,
-            String userParameter, String passwordParameter) throws MqttException {
+    public DirPicMqttClient(Properties props, SSLSocketFactory socketFactory, String brokerDetails)
+            throws MqttException {
         super(brokerDetails, "idSubscriber" + MqttClient.generateClientId(), new MemoryPersistence());
-        this.imageDirectory = imageDirectory;
+        this.props = props;
         this.socketFactory = socketFactory;
-        this.userParameter = userParameter;
-        this.passwordParameter = passwordParameter;
-        this.setConnectionCredentials(this.imageDirectory);
+        this.setConnectionCredentials(this.props.getStoragePath());
     }
 
     private boolean setConnectionCredentials(String imageDirectory) {
@@ -91,6 +91,22 @@ public class DirPicMqttClient extends MqttClient {
                     String filePath = imageDirectory + fileName;
 
                     byte[] data = m.getPayload();
+
+                    Cryptography decryption = new Cryptography(Cipher.DECRYPT_MODE, new byte[0], data,
+                            props.getAesKey());
+
+                    if (decryption.is_success()) {
+
+                        System.out.println(NOTIFICATION_SUCCESS_ENCRYPTION);
+
+                        data = decryption.getUnsecretive();
+
+                    } else {
+
+                        System.out.println(NOTIFICATION_ERROR_ENCRYPTION);
+
+                        return;
+                    }
 
                     ByteArrayInputStream bis = new ByteArrayInputStream(data);
 
@@ -151,9 +167,9 @@ public class DirPicMqttClient extends MqttClient {
 
         this.options.setCleanSession(FLAG_PERSISTENCE_LAYER); // Persistent Session
 
-        this.options.setUserName(this.userParameter);
+        this.options.setUserName(this.props.getBrokerAuthUser());
 
-        this.options.setPassword(this.passwordParameter.toCharArray());
+        this.options.setPassword(this.props.getBrokerAuthPassword().toCharArray());
 
         return this.validateOptions();
     }
@@ -165,8 +181,8 @@ public class DirPicMqttClient extends MqttClient {
                 && this.options.getConnectionTimeout() == INTERVAL_TIMEOUT_CONNECTION
                 && this.options.getKeepAliveInterval() == INTERVAL_KEEP_ALIVE_CONNECTION
                 && this.options.isCleanSession() == FLAG_PERSISTENCE_LAYER
-                && this.options.getUserName() == this.userParameter
-                && this.options.getPassword() == this.passwordParameter.toCharArray();
+                && this.options.getUserName() == this.props.getBrokerAuthUser()
+                && this.options.getPassword() == this.props.getBrokerAuthPassword().toCharArray();
 
     }
 
