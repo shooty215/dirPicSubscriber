@@ -9,7 +9,7 @@ import org.json.simple.parser.JSONParser;
 public class Properties {
 
     private String filePath, brokerIp, brokerPort, channelName, cameraPath, storagePath, keyStorePath, brokerAuthUser,
-            brokerAuthPassword, brokerCertPassword, aesKey;
+            brokerAuthPassword, rsaPublicKey, rsaPrivateKey, aesKey;
 
     public Properties(String filePath) {
         this.filePath = filePath;
@@ -52,8 +52,12 @@ public class Properties {
         return brokerAuthPassword;
     }
 
-    public String getBrokerCertPassword() {
-        return brokerCertPassword;
+    public String getRsaPublicKey() {
+        return rsaPublicKey;
+    }
+
+    public String getRsaPrivateKey() {
+        return rsaPrivateKey;
     }
 
     public String getAesKey() {
@@ -78,7 +82,8 @@ public class Properties {
             this.keyStorePath = (String) jsonObject.get("keyStorePath");
             this.brokerAuthUser = (String) jsonObject.get("brokerAuthUser");
             this.brokerAuthPassword = (String) jsonObject.get("brokerAuthPassword");
-            this.brokerCertPassword = (String) jsonObject.get("brokerCertPassword");
+            this.rsaPublicKey = (String) jsonObject.get("rsaPublicKey");
+            this.rsaPrivateKey = (String) jsonObject.get("rsaPrivateKey");
             this.aesKey = (String) jsonObject.get("aesKey");
 
             jsonObject = null;

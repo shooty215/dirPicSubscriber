@@ -1,7 +1,7 @@
 package com.mqtt.client.paho.subscriber;
 
-import com.mqtt.client.paho.subscriber.service.DirPicMqttClient;
-import com.mqtt.client.paho.subscriber.service.DirPicSslContext;
+import com.mqtt.client.paho.subscriber.cryptography.tls.TlsContext;
+import com.mqtt.client.paho.subscriber.mqtt.MqttClient;
 import com.mqtt.client.paho.subscriber.service.Properties;
 
 import javax.net.ssl.SSLSocketFactory;
@@ -74,11 +74,11 @@ public final class App {
 
             String brokerDetails = MQTT_PROTOCOL_CONNECTION + props.getBrokerIp() + ":" + props.getBrokerPort();
 
-            DirPicSslContext sslContext = new DirPicSslContext(props);
+            TlsContext sslContext = new TlsContext(props);
 
-            SSLSocketFactory socketFactory = sslContext.getSslSocketFactory();
+            SSLSocketFactory socketFactory = sslContext.getFactory();
 
-            DirPicMqttClient client = new DirPicMqttClient(props, socketFactory, brokerDetails);
+            MqttClient client = new MqttClient(socketFactory, brokerDetails, props);
 
             System.out.println(NOTIFICATION_CONNECTION_ATTEMPT);
 
