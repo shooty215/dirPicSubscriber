@@ -55,6 +55,8 @@ public class TlsContext {
 
     public TlsContext(Properties props) {
 
+        this.password = "";
+
         Security.addProvider(new BouncyCastlePQCProvider());
 
         try {

@@ -84,8 +84,6 @@ class Symmetric {
 
             this.cipher = this.initiateCipher();
 
-            System.out.println(this.cipher.getParameters());
-
             byte[] cipherToken = this.cipher.doFinal(this.unsecretive);
 
             cipherToken = this.addIvToCipherToken(cipherToken, this.cipher.getIV());

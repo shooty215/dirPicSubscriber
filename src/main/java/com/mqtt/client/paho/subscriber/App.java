@@ -35,6 +35,7 @@ public final class App {
     final static String NOTIFICATION_ERROR_INPUT_ILLEGAL = "\nIllegal inputs!\n";
 
     public static void main(String[] args) {
+
         /*
          * jar dirPicSubscriber.jar <broker_ip> <broker_port> <broker_topic>
          * <image_save_directory> <key_store_directory> <user_name> <user_password>
@@ -94,9 +95,9 @@ public final class App {
 
         } catch (MqttException e) {
 
-            // e.printStackTrace();
+            System.out.println(NOTIFICATION_ERROR_SUBSCRIPTION + NOTIFICATION_ERROR_CONNECTION);
 
-            System.out.println(NOTIFICATION_ERROR_SUBSCRIPTION + NOTIFICATION_ERROR_CONNECTION + e.getStackTrace());
+            e.printStackTrace();
 
             System.out.println(NOTIFICATION_ERROR_RETRY);
 
@@ -104,9 +105,9 @@ public final class App {
 
         } catch (Exception e) {
 
-            // e.printStackTrace();
+            System.out.println(NOTIFICATION_ERROR_GENERAL);
 
-            System.out.println(NOTIFICATION_ERROR_GENERAL + e.getStackTrace());
+            e.printStackTrace();
 
             System.out.println(NOTIFICATION_ERROR_RETRY);
 

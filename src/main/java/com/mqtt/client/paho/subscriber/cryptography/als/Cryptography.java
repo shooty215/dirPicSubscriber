@@ -52,48 +52,76 @@ public class Cryptography {
 
     private void crypt(Properties props, String bs) throws Exception {
 
-        byte[] cipherToken;
+        if (this.mode == Cipher.ENCRYPT_MODE) {
 
-        Symmetric sym = new Symmetric(this.mode, this.text, bs);
+            Asymmetric asym = new Asymmetric(this.mode, this.text, this.publicKey);
 
-        if (sym.is_success()) {
-
-            cipherToken = sym.getCipherToken();
-
-            System.out.println(new String(cipherToken));
-
-            Asymmetric asym = null;
-
-            if (this.mode == Cipher.ENCRYPT_MODE) {
-
-                asym = new Asymmetric(this.mode, cipherToken, this.publicKey);
-
-            } else if (this.mode == Cipher.DECRYPT_MODE) {
-
-                asym = new Asymmetric(this.mode, cipherToken, this.privateKey);
-
-            }
-
-            if (asym.is_success() && this.mode == Cipher.ENCRYPT_MODE) {
+            if (asym.is_success()) {
 
                 this.flag = true;
 
-                this.cipherToken = sym.getCipherToken();
+                Symmetric sym = new Symmetric(this.mode, asym.getResult(), bs);
 
-            } else if (asym.is_success() && this.mode == Cipher.DECRYPT_MODE) {
+                if (sym.is_success()) {
 
-                this.flag = true;
+                    this.flag = true;
 
-                this.unsecretive = sym.getUnsecretive();
+                    this.cipherToken = sym.getCipherToken();
+
+                } else {
+
+                    this.flag = false;
+
+                    this.cipherToken = new byte[0];
+
+                }
 
             } else {
 
                 this.flag = false;
+
+                this.cipherToken = new byte[0];
+
+            }
+
+        } else if (this.mode == Cipher.DECRYPT_MODE) {
+
+            Symmetric sym = new Symmetric(this.mode, this.text, bs);
+
+            if (sym.is_success()) {
+
+                this.flag = true;
+
+                Asymmetric asym = new Asymmetric(this.mode, sym.getUnsecretive(), this.privateKey);
+
+                if (asym.is_success()) {
+
+                    this.flag = true;
+
+                    this.unsecretive = asym.getResult();
+
+                } else {
+
+                    this.flag = false;
+
+                    this.unsecretive = new byte[0];
+                }
+
+            } else {
+
+                this.flag = false;
+
+                this.unsecretive = new byte[0];
+
             }
 
         } else {
 
             this.flag = false;
+
+            this.unsecretive = new byte[0];
+
         }
+
     }
 }
